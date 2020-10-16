@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"github.com/cjheppell/kondition/internal/kubernetes"
 	"go.uber.org/zap"
 	"net/http"
 )
@@ -13,7 +14,12 @@ func defaultHandler(w http.ResponseWriter, r *http.Request, logger *zap.SugaredL
 	}
 }
 
-func Listen(logger *zap.SugaredLogger) error {
+func Listen(kubeConfigPath string, logger *zap.SugaredLogger) error {
+	_, err := kubernetes.NewStatusClient(kubeConfigPath)
+	if err != nil {
+		return err
+	}
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { defaultHandler(w, r, logger) })
 	logger.Info("Kondition is live and listening on port 8080")
 	return http.ListenAndServe(":8080", nil)
