@@ -2,10 +2,8 @@ package kubernetes
 
 import (
 	"context"
-	"fmt"
+
 	"go.uber.org/zap"
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -44,24 +42,19 @@ func NewStatusClient(kubeConfigPath string, logger *zap.SugaredLogger) (*StatusC
 	}, nil
 }
 
-func (sc *StatusClient) IsDeploymentReady(deploymentName, namespace string) (bool, error) {
+func (sc *StatusClient) IsDeploymentReady(deploymentName, namespace string, minReadyReplicas int32) (bool, error) {
 	sc.logger.Debugf("checking deployment status for deployment '%s' in namespace '%s'", deploymentName, namespace)
 	deployment, err := sc.k8sClient.AppsV1().Deployments(namespace).Get(context.TODO(), deploymentName, metav1.GetOptions{})
 	if err != nil {
 		return false, err
 	}
 
-	for _, condition := range deployment.Status.Conditions {
-		if condition.Type == appsv1.DeploymentAvailable {
-			if condition.Status == corev1.ConditionTrue {
-				sc.logger.Debugf("deployment '%s' in namespace '%s' was available", deploymentName, namespace)
-				return true, nil
-			}
-			sc.logger.Debugf("deployment '%s' in namespace '%s' was not available", deploymentName, namespace)
-			return false, nil
-		}
-		continue
+	readyReplicas := deployment.Status.ReadyReplicas
+	if readyReplicas >= minReadyReplicas {
+		sc.logger.Debugf("deployment '%s' in namespace '%s' has sufficient ready replicas (%d/%d)", deploymentName, namespace, readyReplicas, minReadyReplicas)
+		return true, nil
+	} else {
+		sc.logger.Debugf("deployment '%s' in namespace '%s' has insufficient ready replicas (%d/%d)", deploymentName, namespace, readyReplicas, minReadyReplicas)
+		return false, nil
 	}
-
-	return false, fmt.Errorf("could not find DeploymentAvailable condition on the deployment")
 }

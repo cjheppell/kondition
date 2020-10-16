@@ -32,6 +32,15 @@ func Parse(configPath string) ([]Service, error) {
 	if err != nil {
 		return nil, err
 	}
+	applyDefaultsTo(&serviceConfigs)
 
 	return serviceConfigs, nil
+}
+
+func applyDefaultsTo(services *[]Service) {
+	for i := range *services {
+		if (*services)[i].MinReadyReplicas < 1 {
+			(*services)[i].MinReadyReplicas = 1
+		}
+	}
 }
