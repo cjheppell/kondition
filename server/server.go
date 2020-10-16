@@ -38,29 +38,33 @@ func Listen(kubeConfigPath, serviceConfigPath string, logger *zap.SugaredLogger)
 
 func registerTargets(services []config.Service, statusClient *kubernetes.StatusClient, logger *zap.SugaredLogger) error {
 	for _, service := range services {
-		logger.Infof("Starting service registration for %s", service.Name)
-
-		http.HandleFunc(fmt.Sprintf("%s", service.ApiPath), func(w http.ResponseWriter, r *http.Request) {
-			isReady, err := statusClient.IsDeploymentReady(service.DeploymentName, service.Namespace)
-			if err != nil {
-				logger.Errorf("error getting service status for service '%s'. err: %s", service.Name, err)
-			}
-
-			if !isReady {
-				w.WriteHeader(503)
-				_, err := fmt.Fprintf(w, "Service %s is unavailable", service.Name)
-				if err != nil {
-					logger.Errorf("error writing unavailable status to http response. err: %s", err)
-				}
-			} else {
-				w.WriteHeader(200)
-				_, err := fmt.Fprintf(w, "Service %s is available", service.Name)
-				if err != nil {
-					logger.Errorf("error writing available status to http response. err: %s", err)
-				}
-			}
-		})
+		logger.Infof("Starting service registration for %s at path %s", service.Name, service.ApiPath)
+		registerTarget(service, statusClient, logger)
 	}
 
 	return nil
+}
+
+func registerTarget(service config.Service, statusClient *kubernetes.StatusClient, logger *zap.SugaredLogger) {
+	http.HandleFunc(fmt.Sprintf("%s", service.ApiPath), func(w http.ResponseWriter, r *http.Request) {
+		logger.Debugf("request URL was: %s", r.URL)
+		isReady, err := statusClient.IsDeploymentReady(service.DeploymentName, service.Namespace)
+		if err != nil {
+			logger.Errorf("error getting service status for service '%s'. err: %s", service.Name, err)
+		}
+
+		if !isReady {
+			w.WriteHeader(503)
+			_, err := fmt.Fprintf(w, "Service %s is unavailable", service.Name)
+			if err != nil {
+				logger.Errorf("error writing unavailable status to http response. err: %s", err)
+			}
+		} else {
+			w.WriteHeader(200)
+			_, err := fmt.Fprintf(w, "Service %s is available", service.Name)
+			if err != nil {
+				logger.Errorf("error writing available status to http response. err: %s", err)
+			}
+		}
+	})
 }
