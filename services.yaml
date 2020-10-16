@@ -1,0 +1,10 @@
+# This contains a sample services.yaml file which defines 2 services to provide status reports for
+- name: "Minio"
+  deploymentName: "minio"
+  namespace: "default"
+  apiPath: "/minio"
+- name: "nginx"
+  deploymentName: "nginx"
+  namespace: "default"
+  apiPath: "/nginx"
+
