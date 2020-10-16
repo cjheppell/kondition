@@ -55,6 +55,9 @@ func serve() error {
 }
 
 func getKubeConfigPath() (string, error) {
+	if kubeConfigFile == "" {
+		return kubeConfigFile, nil
+	}
 	absPath, err := filepath.Abs(kubeConfigFile)
 	if err != nil {
 		return "", fmt.Errorf("error resolving path for provided kubeconfig file. err: %s", err)
