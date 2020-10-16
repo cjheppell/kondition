@@ -9,24 +9,58 @@ import (
 )
 
 func defaultHandler(w http.ResponseWriter, r *http.Request, logger *zap.SugaredLogger) {
-	_, err := fmt.Fprint(w, "Kondition is live and running. Navigate to a path to check the status of a watched service.")
+	w.WriteHeader(404)
+	_, err := fmt.Fprint(w, "Requested service not found")
 	if err != nil {
 		logger.Warnf("error writing to http response: %s", err)
 	}
 }
 
 func Listen(kubeConfigPath, serviceConfigPath string, logger *zap.SugaredLogger) error {
-	_, err := kubernetes.NewStatusClient(kubeConfigPath)
+	statusClient, err := kubernetes.NewStatusClient(kubeConfigPath, logger)
 	if err != nil {
 		return err
 	}
 
-	_, err = config.Parse(serviceConfigPath)
+	services, err := config.Parse(serviceConfigPath)
 	if err != nil {
 		return err
 	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { defaultHandler(w, r, logger) })
+	err = registerTargets(services, statusClient, logger)
+	if err != nil {
+		return err
+	}
 	logger.Info("Kondition is live and listening on port 8080")
 	return http.ListenAndServe(":8080", nil)
+}
+
+func registerTargets(services []config.Service, statusClient *kubernetes.StatusClient, logger *zap.SugaredLogger) error {
+	for _, service := range services {
+		logger.Infof("Starting service registration for %s", service.Name)
+
+		http.HandleFunc(fmt.Sprintf("%s", service.ApiPath), func(w http.ResponseWriter, r *http.Request) {
+			isReady, err := statusClient.IsDeploymentReady(service.DeploymentName, service.Namespace)
+			if err != nil {
+				logger.Errorf("error getting service status for service '%s'. err: %s", service.Name, err)
+			}
+
+			if !isReady {
+				w.WriteHeader(503)
+				_, err := fmt.Fprintf(w, "Service %s is unavailable", service.Name)
+				if err != nil {
+					logger.Errorf("error writing unavailable status to http response. err: %s", err)
+				}
+			} else {
+				w.WriteHeader(200)
+				_, err := fmt.Fprintf(w, "Service %s is available", service.Name)
+				if err != nil {
+					logger.Errorf("error writing available status to http response. err: %s", err)
+				}
+			}
+		})
+	}
+
+	return nil
 }
