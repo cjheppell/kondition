@@ -28,7 +28,7 @@ func Parse(configPath string) ([]Service, error) {
 	}
 
 	var serviceConfigs []Service
-	err = yaml.Unmarshal(yamlFile, serviceConfigs)
+	err = yaml.Unmarshal(yamlFile, &serviceConfigs)
 	if err != nil {
 		return nil, err
 	}
