@@ -12,7 +12,7 @@ import (
 
 type StatusClient struct {
 	k8sClient *kubernetes.Clientset
-	logger *zap.SugaredLogger
+	logger    *zap.SugaredLogger
 }
 
 func NewStatusClient(kubeConfigPath string, logger *zap.SugaredLogger) (*StatusClient, error) {
@@ -38,7 +38,7 @@ func NewStatusClient(kubeConfigPath string, logger *zap.SugaredLogger) (*StatusC
 
 	return &StatusClient{
 		k8sClient: k8sClient,
-		logger: logger,
+		logger:    logger,
 	}, nil
 }
 
