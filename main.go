@@ -19,10 +19,24 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = server.Listen(kubeConfigPath, sugar)
+	serviceConfigPath, err := getServiceConfigPath(os.Args)
+	if err != nil {
+		sugar.Errorf(err.Error())
+		os.Exit(1)
+	}
+
+	err = server.Listen(kubeConfigPath, serviceConfigPath, sugar)
 	if err != nil {
 		sugar.Errorf("error starting Kondition server: %s", err)
 		os.Exit(1)
+	}
+}
+
+func getServiceConfigPath(args []string) (string, error) {
+	if len(args) > 2 {
+		return os.Args[2], nil
+	} else {
+		return "", fmt.Errorf("second argument to must be the service config file")
 	}
 }
 

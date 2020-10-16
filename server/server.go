@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"github.com/cjheppell/kondition/config"
 	"github.com/cjheppell/kondition/internal/kubernetes"
 	"go.uber.org/zap"
 	"net/http"
@@ -14,8 +15,13 @@ func defaultHandler(w http.ResponseWriter, r *http.Request, logger *zap.SugaredL
 	}
 }
 
-func Listen(kubeConfigPath string, logger *zap.SugaredLogger) error {
+func Listen(kubeConfigPath, serviceConfigPath string, logger *zap.SugaredLogger) error {
 	_, err := kubernetes.NewStatusClient(kubeConfigPath)
+	if err != nil {
+		return err
+	}
+
+	_, err = config.Parse(serviceConfigPath)
 	if err != nil {
 		return err
 	}
