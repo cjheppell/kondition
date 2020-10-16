@@ -4,24 +4,27 @@ import (
 	"fmt"
 	"github.com/cjheppell/kondition/server"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"os"
 	"path/filepath"
 )
 
 func main() {
-	logger, _ := zap.NewProduction()
+	prodConfig := zap.NewProductionConfig()
+	prodConfig.Level = zap.NewAtomicLevelAt(zapcore.DebugLevel)
+	logger, _ := prodConfig.Build()
 	defer logger.Sync()
 	sugar := logger.Sugar()
 
 	kubeConfigPath, err := getKubeConfigPath(os.Args)
 	if err != nil {
-		sugar.Errorf(err.Error())
+		fmt.Printf(err.Error())
 		os.Exit(1)
 	}
 
 	serviceConfigPath, err := getServiceConfigPath(os.Args)
 	if err != nil {
-		sugar.Errorf(err.Error())
+		fmt.Printf(err.Error())
 		os.Exit(1)
 	}
 
