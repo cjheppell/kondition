@@ -4,7 +4,7 @@ Kondition is a Go-based HTTP service that runs within a Kubernetes cluster, inte
 
 The Kondition server then makes it possible to inspect the status of an internal deployment at a given external URL path, without needing to expose your deployment services.
 
-Think of it like an publicly accessible service that displays the state of your internal pod readiness probes.
+Think of it like a HTTP API that exposes the state of your internal deployment readiness status.
 
 ## How does it work
 
