@@ -1,0 +1,4 @@
+- name: "Minio"
+  deploymentName: "minio"
+  namespace: "default"
+  apiPath: "/minio"
