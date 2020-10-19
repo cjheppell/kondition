@@ -48,7 +48,7 @@ func registerTargets(services []config.Service, statusClient *kubernetes.StatusC
 func registerTarget(service config.Service, statusClient *kubernetes.StatusClient, logger *zap.SugaredLogger) {
 	http.HandleFunc(fmt.Sprintf("%s", service.ApiPath), func(w http.ResponseWriter, r *http.Request) {
 		logger.Debugf("request URL was: %s", r.URL)
-		isReady, err := statusClient.IsDeploymentReady(service.DeploymentName, service.Namespace)
+		isReady, err := statusClient.IsDeploymentReady(service.DeploymentName, service.Namespace, service.MinReadyReplicas)
 		if err != nil {
 			logger.Errorf("error getting service status for service '%s'. err: %s", service.Name, err)
 		}

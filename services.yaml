@@ -2,9 +2,11 @@
 - name: "Minio"
   deploymentName: "minio"
   namespace: "default"
+  minReadyReplicas: 2 # defaults to 1 if omitted
   apiPath: "/minio"
 - name: "nginx"
   deploymentName: "nginx"
   namespace: "default"
+  minReadyReplicas: 3 # defaults to 1 if omitted
   apiPath: "/nginx"
 
